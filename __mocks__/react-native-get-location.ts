@@ -13,4 +13,4 @@ function getCurrentPosition() {
   });
 }
 
-export default getCurrentPosition;
+export default {getCurrentPosition};
