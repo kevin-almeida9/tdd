@@ -18,7 +18,7 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-type position = {
+export type position = {
   latitude: number;
   longitude: number;
 };
@@ -131,7 +131,7 @@ describe('WeatherCurrent', () => {
 
       fireEvent.press(button);
 
-      await waitFor(async () => {
+      await waitFor(() => {
         fireEvent.press(button);
         expect(button).not.toHaveStyle({borderColor: Colors.ERROR});
       });

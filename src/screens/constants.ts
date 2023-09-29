@@ -6,6 +6,7 @@ export enum Colors {
   DARK_GRAY = '#595c66',
   DARKER_GRAY = '#2c2d35',
   ERROR = '#B00020',
+  TRANSPARENT = 'transparent',
 }
 
 export const allMonth = [
