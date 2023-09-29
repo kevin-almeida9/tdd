@@ -1,15 +1,27 @@
 import React from 'react';
-import {act, fireEvent, render, waitFor} from '@testing-library/react-native';
+import {
+  act,
+  fireEvent,
+  render,
+  waitFor,
+  waitForElementToBeRemoved,
+} from '@testing-library/react-native';
 import WeatherCurrent from '../WeatherCurrent';
 import {useNavigation} from '@react-navigation/native';
 import LocationService from '../../services/LocationService';
+import {Colors} from '../../screens/constants';
 
 jest.mock('@react-navigation/native', () => {
   return {
     ...jest.requireActual<object>('@react-navigation/native'),
-    useNavigation: jest.fn(),
+    useNavigation: jest.fn().mockReturnValue({navigate: jest.fn()}),
   };
 });
+
+type position = {
+  latitude: number;
+  longitude: number;
+};
 
 describe('WeatherCurrent', () => {
   test('Should render correctly', () => {
@@ -41,12 +53,9 @@ describe('WeatherCurrent', () => {
 
   describe('Loader', () => {
     test('Should be rendered when position is begin fetched', async () => {
-      let mockResolve!: (position: {
-        latitude: number;
-        longitude: number;
-      }) => void;
+      let mockResolve!: (position: position) => void;
 
-      jest.spyOn(LocationService, 'getCurrentPosition').mockReturnValueOnce(
+      jest.spyOn(LocationService, 'getCurrentPosition').mockImplementationOnce(
         () =>
           new Promise((resolve) => {
             mockResolve = resolve;
@@ -59,11 +68,72 @@ describe('WeatherCurrent', () => {
       fireEvent.press(button);
 
       await expect(
-        wrapper.getByTestId('button-loading'),
+        wrapper.findByTestId('button-loading'),
       ).resolves.toBeDefined();
 
       await act(async () => {
         await mockResolve({latitude: 0, longitude: 0});
+      });
+    });
+
+    test('Should not be rendered when position has been fetched', async () => {
+      const wrapper = render(<WeatherCurrent />);
+      const button = wrapper.getByTestId('weather-current');
+
+      fireEvent.press(button);
+      await waitForElementToBeRemoved(() =>
+        wrapper.getByTestId('button-loading'),
+      );
+
+      return expect(wrapper.findByTestId('button-loading')).rejects.toThrow();
+    });
+
+    test('Should not be rendered when fetching position has failed', async () => {
+      jest
+        .spyOn(LocationService, 'getCurrentPosition')
+        .mockRejectedValueOnce(new Error(''));
+
+      const wrapper = render(<WeatherCurrent />);
+      const button = wrapper.getByTestId('weather-current');
+
+      fireEvent.press(button);
+      await waitForElementToBeRemoved(() =>
+        wrapper.getByTestId('button-loading'),
+      );
+
+      return expect(wrapper.findByTestId('button-loading')).rejects.toThrow();
+    });
+  });
+
+  describe('Error', () => {
+    test('Should be displayed after fetching position has failed', async () => {
+      jest
+        .spyOn(LocationService, 'getCurrentPosition')
+        .mockRejectedValueOnce(new Error(''));
+
+      const wrapper = render(<WeatherCurrent />);
+      const button = wrapper.getByTestId('weather-current');
+
+      fireEvent.press(button);
+
+      await waitFor(async () => {
+        expect(button).toHaveStyle({borderColor: Colors.ERROR});
+      });
+    });
+
+    test('Should be reset after de fetching position again', async () => {
+      jest
+        .spyOn(LocationService, 'getCurrentPosition')
+        .mockRejectedValueOnce(new Error(''));
+
+      const wrapper = render(<WeatherCurrent />);
+      const button = wrapper.getByTestId('weather-current');
+
+      fireEvent.press(button);
+
+      await waitFor(async () => {
+        fireEvent.press(button);
+        expect(button).not.toHaveStyle({borderColor: Colors.ERROR});
       });
     });
   });
