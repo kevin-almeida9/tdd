@@ -4,8 +4,26 @@ import {createStore} from 'redux';
 import rootReducer from '../store/reducers';
 import {RenderOptions, render} from '@testing-library/react-native';
 import {Provider} from 'react-redux';
+import {runSaga} from 'redux-saga';
+
+type Action = {
+  type?: any;
+  payload?: any;
+};
 
 const store = createStore(rootReducer);
+
+export async function recordSaga(worker: any, initialAction: Action) {
+  const dispatched: Array<Function> = [];
+
+  await runSaga(
+    {dispatch: (action: Function) => dispatched.push(action)},
+    worker,
+    initialAction,
+  ).toPromise();
+
+  return dispatched;
+}
 
 type CustomRenderOptions = {
   store?: typeof store;
