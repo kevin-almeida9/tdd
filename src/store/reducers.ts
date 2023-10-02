@@ -1,6 +1,8 @@
+import {combineReducers} from 'redux';
+
 export const reducers = {};
 
-const rootReducer = {};
+const rootReducer = combineReducers(reducers);
 
 export default rootReducer;
-export type StateType = any;
+export type StateType = ReturnType<typeof rootReducer>;

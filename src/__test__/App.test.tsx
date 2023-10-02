@@ -4,6 +4,7 @@ import {render} from '@testing-library/react-native';
 import AppNavigator from '../screens';
 import App from '../App';
 import {Provider} from 'react-redux';
+import store from '../store';
 
 jest.mock('../screens', () => jest.fn());
 jest.mock('react-redux', () => {
@@ -26,11 +27,15 @@ describe('App', () => {
   });
 
   test('Should render provider', () => {
-    (Provider as jest.Mock).mockReturnValueOnce(
-      <View testID="mock-provider" />,
-    );
+    let providerStore!: typeof store;
+
+    (Provider as jest.Mock).mockImplementationOnce(({store}) => {
+      providerStore = store;
+      return <View testID="mock-provider" />;
+    });
 
     const wrapper = render(<App />);
     wrapper.getByTestId('mock-provider');
+    expect(providerStore).toBe(store);
   });
 });
